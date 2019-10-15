@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Google Maps examples</title>
+    <link rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+            integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+            crossorigin="anonymous">
+    <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/prismjs@1.17.1/themes/prism-okaidia.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.17.1/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.17.1/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@deleteagency/live-highlight@0.0.1/build/live-highlight.min.js"></script>
+
+    <script src="build/google-maps.min.js"></script>
+</head>
+
+<script>
+    LiveHighlight.bootstrap((element, type) => {
+        function getLanguage(type) {
+            switch (type) {
+                case LiveHighlight.TYPE_JAVASCRIPT:
+                    return 'js';
+                case LiveHighlight.TYPE_STYLES:
+                    return 'css';
+                case LiveHighlight.TYPE_HTML:
+                    return 'markup';
+            }
+        }
+
+        element.className = `lang-${getLanguage(type)}`;
+        Prism.highlightElement(element);
+    });
+</script>
+<style>
+    .map {
+        position: relative;
+        width: 100%;
+        max-width: 700px;
+        height: 500px;
+    }
+</style>
+
+<body>
+<div class="py-4">
+    <div class="container">
+        <div class="mb-5">
+            <h1>Google maps examples</h1>
+            <p>Let's add a simple script which loads google maps js API and execute callbacks when API is ready.</p>
+
+            <script data-live-highlight>
+                let isLoaded = false;
+                let isLoading = false;
+                const onloadQueue = [];
+
+                window.onGoogleMapsIframeAPIReady = function () {
+                    isLoaded = true;
+                    onloadQueue.forEach(callback => callback());
+                };
+
+                function insertScript() {
+                    const script = document.createElement('script');
+                    script.async = true;
+                    script.defer = true;
+                    script.src = `http://maps.google.com/maps/api/js?callback=onGoogleMapsIframeAPIReady`;
+                    const s = document.getElementsByTagName('script')[0];
+                    s.parentNode.insertBefore(script, s);
+                }
+
+                function onMapsReady(callback) {
+                    if (!isLoading) {
+                        insertScript();
+                        isLoading = true;
+                    }
+                    if (isLoaded) {
+                        callback();
+                    } else {
+                        onloadQueue.push(callback);
+                    }
+                }
+            </script>
+        </div>
+        <div class="mb-5">
+            <h2>Simple map</h2>
+            <p>The simplest example is just a map without any markers and popups. Lets draw one.</p>
+            <p>
+                To do so
+                <b>we must be sure that all classes from the API are loaded and available</b> globally.
+                I recommend using something like script above and subscribe on API load.
+                By doing that you don't rely on any execution order and don't load google script until it is needed (which is always good for performance).<br>
+                You can do it either by waiting for onMapsReady callback:
+            </p>
+            <pre><code class="language-js">onMapsReady(() =&gt; {
+    const map = new GoogleMap(document.getElementById('map'));
+    map.render();
+});</code></pre>
+            <p>Or pass a promise to the GoogleMap options which will be resolved once Maps Api is ready:</p>
+            <pre><code class="language-js">const map = new GoogleMap(
+    document.getElementById('map'),
+    {},
+    {
+        initPromise: () => new Promise((resolve) =&gt; onMapsReady(resolve))
+    }
+);
+map.render();</code></pre>
+            <p>In our examples we will use the second option</p>
+            <p>Add a few options and render the map:</p>
+            <div data-live-highlight-target="target0"></div>
+            <div class="map" id="map0"></div>
+            <script data-live-highlight="target0">
+                const map = new GoogleMap(
+                    document.getElementById('map0'),
+                    {
+                        zoom: 15,
+                        maxZoom: 19,
+                        minZoom: 1,
+                        center: {
+                            lat: 51.507100,
+                            lng: -0.122758,
+                        }
+                    },
+                    { initPromise: () => new Promise((resolve) => onMapsReady(resolve)) }
+                );
+                map.render();
+            </script>
+            <p class="mt-4">
+                Note how after creating a GoogleMap we then call render() method. <br>
+                Just creating an instance doesn't render anything,
+                <b>you have to implicitly call its render method</b>
+            </p>
+        </div>
+        <div class="mb-5">
+            <h2>Markers</h2>
+            <p>Just pass an array of MarkerConfig to setMarkers method and then call render. Markers will be fit within the map automatically by calling
+                <a target="_blank" rel="noopener" href="https://developers.google.com/maps/documentation/javascript/reference/map#Map.fitBounds">Map.fitBounds</a>
+                <br>
+                This can be disabled by passing <b>autoFitMarkers: false</b>  to the options (default is true). Also you can pass <b>fitMarkersPaddings</b> option
+                which will be also passed to Map.fitBounds as the second argument
+            </p>
+
+            <div data-live-highlight-target="target1"></div>
+            <div class="map" id="map1"></div>
+
+            <button id="map1-button" class="btn btn-primary mt-4">Fit markers</button>
+
+            <script data-live-highlight="target1">
+                const markersData1 = [
+                    {
+                        position: {
+                            lat: 51.507100,
+                            lng: -0.122758,
+                        }
+
+                    },
+                    {
+                        position: {
+                            lat: 51.507400,
+                            lng: -0.127758,
+                        }
+                    },
+                    {
+                        position: {
+                            lat: 51.507150,
+                            lng: -0.126758,
+                        }
+                    }
+                ];
+
+                const map1 = new GoogleMap(
+                    document.getElementById('map1'),
+                    {
+                        zoom: 11,
+                        maxZoom: 19,
+                        minZoom: 1,
+                    },
+                    {
+                        initPromise: () => new Promise((resolve) => onMapsReady(resolve)),
+                        fitMarkersPaddings: {
+                            top: 10,
+                            bottom: 10,
+                            left: 10,
+                            right: 10,
+                        }
+                    }
+                );
+
+                map1.setMarkers(markersData1);
+                map1.render();
+
+                document.getElementById('map1-button').addEventListener('click', () => {
+                    map1.fitCurrentMarkers();
+                })
+            </script>
+        </div>
+
+        <div class="mb-5">
+            <h2>Markers with popups</h2>
+            <p>To render popups we need some basic styles</p>
+            <p>
+                Our implementation of custom popups is based on this example Google: <a
+                    target="_blank" rel="noopener"
+                    href="https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/javascript/examples/overlay-popup">https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/javascript/examples/overlay-popup</a>
+                <br>
+                But it also hides a few implementation details and allow you to style your popups with fewer elements and classes:
+            </p>
+            <style data-live-highlight>
+                .map-popup {
+                    position: relative;
+                    width: 300px;
+                    /* place popup above the marker + take account of the marker's height */
+                    transform: translate(-50%, calc(-100% - 66px));
+                    background-color: #FFF;
+                    box-shadow: 0 2px 25px 0 rgba(0, 0, 0, 0.5);
+                }
+
+                .map-popup::after {
+                    content: '';
+                    display: block;
+                    position: absolute;
+                    top: 100%;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 0;
+                    height: 0;
+                    border-left: 16px solid #0000;
+                    border-right: 16px solid #0000;
+                    border-top: 16px solid #FFF;
+                }
+
+                .map-popup__content {
+                    overflow-y: auto;
+                    max-height: 150px;
+                }
+            </style>
+            <p>
+                These elements which will be our popups <br>
+            </p>
+
+            <div style="display: none" data-live-highlight>
+                <div id="marker2-1" class="map-popup">
+                    <div class="map-popup__content">
+                        <h3>Text1</h3>
+                        <p>Content1</p>
+                    </div>
+                </div>
+                <div id="marker2-2" class="map-popup">
+                    <div class="map-popup__content">
+                        <h3>Text2</h3>
+                        <p>Content2</p>
+                    </div>
+                </div>
+                <div id="marker2-3" class="map-popup">
+                    <div class="map-popup__content">
+                        <h3>Text3</h3>
+                        <p>Content3</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-3">
+                <b>autoFitPopup</b> options is enabled by default and it will likely work at once: once you click on marker that has popupElement and popup with this element is opened
+                we will try to fit the whole popup within the map.
+                To do so we should get the width and height of particular popup's content and adjust map positioning.
+                <br> In case you use more complex styles or a lot of "position:absolute" the width and height of the popup root element can be zero.
+                If
+                <b>autoFitPopup</b> doesn't work for you out of the box you can try passing additional options which is called
+                <b>getPopupContent</b>.
+                It is a function that receives a root element of your popup and should return an element that contains an actual content of your popup (so it will have proper width and height).
+                For example you can add additional attribute to your markup to mark a particular element as popup content and return it from
+                <b>getPopupContent</b>.
+            </p>
+            <pre><code
+                    class="language-js">getPopupContent: root => root.querySelector('[data-popup-content]')</code></pre>
+
+            <p>Lets render our markers with popups. For that we will have an array of markers configs which have popupElement property:</p>
+
+            <div data-live-highlight-target="example2"></div>
+
+            <div class="map" id="map2"></div>
+
+            <script data-live-highlight="example2">
+                const markersData2 = [
+                    {
+                        lat: 51.507100,
+                        lng: -0.122758,
+                        elementId: 'marker2-1',
+                    },
+                    {
+                        lat: 51.507400,
+                        lng: -0.127758,
+                        elementId: 'marker2-2',
+                    },
+                    {
+                        lat: 51.507150,
+                        lng: -0.126758,
+                        elementId: 'marker2-3',
+                    }
+                ];
+                const markers2 = markersData2.map(markerData => {
+                    let marker = {
+                        position: { lat: markerData.lat, lng: markerData.lng }
+                    };
+                    if (markerData.elementId) {
+                        marker.popupElement = document.getElementById(markerData.elementId)
+                    }
+                    return marker;
+                });
+
+                const map2 = new GoogleMap(
+                    document.getElementById('map2'),
+                    {
+                        zoom: 11,
+                        maxZoom: 19,
+                        minZoom: 1,
+                    },
+                    {
+                        initPromise: () => new Promise((resolve) => onMapsReady(resolve)),
+                        fitPopupPaddings: {
+                            top: 10,
+                            bottom: 10,
+                            left: 10,
+                            right: 10,
+                        }
+                    }
+                );
+
+                map2.setMarkers(markers2);
+                map2.render();
+            </script>
+        </div>
+
+        <div class="mb-5">
+            <h2>Custom markers</h2>
+            <p>
+                If you want to customize your markers the easiest way is to pass additional option <b>createMarker</b>. If it is provided than instead of creating default marker class by calling new GoogleMarker(options)
+                your custom function will be called.
+                <br> <b>This function should return an instance of GoogleMarker class.</b>
+                <br> You can implement whatever logic you want (for example create instances of different classes) and then override their <b>getIconUrl</b> (getIconWidth/getIconHeight) method like below:
+            </p>
+
+            <div style="display: none">
+                <div id="marker3" class="map-popup">
+                    <div class="map-popup__content">
+                        <h3>Text1</h3>
+                        <p>Content1</p>
+                    </div>
+                </div>
+            </div>
+
+            <div data-live-highlight-target="example3"></div>
+
+            <div class="map" id="map3"></div>
+
+            <script data-live-highlight="example3">
+                const markersData3 = [
+                    {
+                        lat: 51.507100,
+                        lng: -0.122758,
+                        elementId: 'marker3',
+                    },
+                ];
+                const markers3 = markersData3.map(markerData => {
+                    let marker = {
+                        position: { lat: markerData.lat, lng: markerData.lng }
+                    };
+                    if (markerData.elementId) {
+                        marker.popupElement = document.getElementById(markerData.elementId)
+                    }
+                    return marker;
+                });
+
+
+                class HouseIconMarker extends GoogleMarker {
+                    getIconUrl() {
+                        // you can use isActive property to change the marker appearance
+                        return this.isActive ? 'https://image.flaticon.com/icons/svg/1264/1264791.svg' : 'https://image.flaticon.com/icons/svg/1239/1239525.svg';
+                    }
+
+                    getIconWidth() {
+                        return 60;
+                    }
+
+                    getIconHeight() {
+                        return 60;
+                    }
+                }
+
+                const map3 = new GoogleMap(
+                    document.getElementById('map3'),
+                    {},
+                    {
+                        initPromise: () => new Promise((resolve) => onMapsReady(resolve)),
+                        createMarker: (options) => {
+                            return new HouseIconMarker(options);
+                        }
+                    },
+                );
+
+                map3.setMarkers(markers3);
+                map3.render();
+            </script>
+        </div>
+    </div>
+</div>
+</body>
+</html>
