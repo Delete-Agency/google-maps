@@ -92,7 +92,7 @@ Default: `true`
 
 ### getPopupContent
 
-Type: `Function` <br>
+Type: `Function`<br>
 Default: `null`
 
 ### fitMarkersPaddings
