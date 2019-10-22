@@ -27,7 +27,7 @@ const map = new GoogleMap(
     },
     // custom options (see bellow)
     {
-        fitMarkersPaddings: {
+        fitPaddings: {
             top: 10,
             bottom: 10,
             left: 10,
@@ -52,13 +52,6 @@ map.setMarkers([
             lng: -0.127758,
         },
         popupElement: document.getElementById('popup2')
-    },
-    {
-        position: {
-            lat: 51.507150,
-            lng: -0.126758,
-        },
-        popupElement: document.getElementById('popup3')
     }
 ]);
 map.render();
@@ -66,9 +59,10 @@ map.render();
 
 ## Options
 
-The full list of google.maps.MapOptions can be found [here](https://developers.google.com/maps/documentation/javascript/reference/map#MapOptions)
+The full list of native google.maps.MapOptions can be found [here](https://developers.google.com/maps/documentation/javascript/reference/map#MapOptions)
+and can be passed as the second argument: new GoogleMap(element, mapOptions, **options**)
 <br>
-Below you can find options for GoogleMap itself (new GoogleMap(element, mapOptions, **options**))
+Below you can find options for GoogleMap itself (these are passed to the GoogleMap constructor as the third argument - new GoogleMap(element, mapOptions, **options**))
 
 ### createMarker
 
@@ -80,7 +74,7 @@ Default: `null`
 Type: `Function`<br>
 Default: `null`
 
-### autoFitMarkers
+### autoFitOnRender
 
 Type: `boolean`<br>
 Default: `true`
@@ -90,12 +84,17 @@ Default: `true`
 Type: `boolean`<br>
 Default: `true`
 
+### deactivateMarkerOnMapClick
+
+Type: `boolean`<br>
+Default: `true`
+
 ### getPopupContent
 
 Type: `Function`<br>
 Default: `null`
 
-### fitMarkersPaddings
+### fitPaddings
 
 Type: `Object`<br>
 Default: `{top: 0, bottom: 0, left: 0, right: 0}`
@@ -105,7 +104,7 @@ Default: `{top: 0, bottom: 0, left: 0, right: 0}`
 Type: `Object`<br>
 Default: `{top: 0, bottom: 0, left: 0, right: 0}`
 
-## API
+## GoogleMap API
 
 ### new GoogleMap(element ,mapOptions = {}, options = {})
 
@@ -121,7 +120,7 @@ An element which holds the map
 #### mapOptions (see [here](https://developers.google.com/maps/documentation/javascript/reference/map#MapOptions))
 
 *Optional*<br>
-Type: `google.maps.MarkerOptions`
+Type: `google.maps.MapOptions`
 
 #### options
 
@@ -134,7 +133,7 @@ Renders the map
 
 **Note**: Just creating an instance doesn't render anything, 
 you have to implicitly call its render method to render initial map 
-or reflect a changes after map.setMarkers() was called
+or reflect a changes after map.setMarkers/setPolylines/setPolygons is called
 
 ### map.setMarkers(markers)
 
@@ -145,37 +144,110 @@ Save markers to render them once render() method is called
 *Required*<br>
 Type: `google.maps.MarkerOptions[]`
 
-An array of object that inherited from [google.maps.MarkerOptions](https://developers.google.com/maps/documentation/javascript/reference/marker#MarkerOptions)
+An array of objects which are inherited from [google.maps.MarkerOptions](https://developers.google.com/maps/documentation/javascript/reference/marker#MarkerOptions)
 <br> If you want a particular marker to show a popup you can extend its options object with `popupElement` property.
 <br> It should contain an HTMLElement which will be used as the content of the popup
 <br> Also you can identify every marker by passing additional property `id`.
 `id` is used in order to avoid redundant destroying and creating markers instance
 when setMarkers(...) + render() are called multiple times but some of the provided markers are already rendered. 
-<br> `id` is optional because by default it will be generated under the hood based on markerOptions.position property.
+<br> `id` is optional because by default it uses the whole marker config object as a key.
 But if you already have identifiers in you markers or going to call map.getMarkersById() later and interact with markers directly
 it makes sense to use your own id value.
+
+### map.setPolylines(polylines)
+
+Save polylines configs to render them once render() method is called
+
+#### polylines
+
+*Required*<br>
+Type: `google.maps.PolylineOptions[]`
+
+An array of objects which are inherited from [google.maps.PolylineOptions](https://developers.google.com/maps/documentation/javascript/reference/polygon#PolylineOptions)
+<br>
+Uses the same idea with `id` as (markers)[#markers]
+
+### map.setPolygons(polygons)
+
+Save polygons configs to render them once render() method is called
+
+#### polygons
+
+*Required*<br>
+Type: `google.maps.PolygonOptions[]`
+
+An array of objects which are inherited from [google.maps.PolygonOptions](https://developers.google.com/maps/documentation/javascript/reference/polygon#PolygonOptions)
+<br>
+Uses the same idea with `id` as (markers)[#markers]
 
 ### map.getMapInstance()
 
 Returns `Promise<google.maps.Map>`
 
-### map.fitCurrentMarkers()
+### map.fitDrawings()
 
-Fits previously rendered markers within the map
+Fits previously rendered objects (markers, polylines, polygons) within the map
 
-### map.getCurrentMarkersCount()
+### map.getMarkersCount()
 
 Returns `integer`
 
 Return the quantity of the rendered markers
 
-### map.getMarkersById()
+### map.getPolylinesCount()
 
-Returns `Object.<string, GoogleMarker>}`
+Returns `integer`
 
-Return the object with rendered instances of GoogleMarker. Read about id attribute (here)[#markers] 
+Return the quantity of the rendered polylines
 
-### googleMarker.getMarkerInstance()
+### map.getPolygonsCount()
+
+Returns `integer`
+
+Return the quantity of the rendered polygons
+
+### map.getMarkerById(id)
+
+Returns `GoogleMarker`
+
+Return an instance of the rendered GoogleMarker by the provided id
+
+#### id
+
+*Required*<br>
+Type: `(string|Object)`
+
+The id of the marker. Read about it (here)[#markers] 
+
+### map.getPolylineById(id)
+
+Returns `GooglePolyline`
+
+Return an instance of the rendered GooglePolyline by the provided id
+
+#### id
+
+*Required*<br>
+Type: `(string|Object)`
+
+The id of the polyline. Read about it (here)[#markers] 
+
+### map.getPolygonById(id)
+
+Returns `GooglePolygon`
+
+Return an instance of the rendered GooglePolygon by the provided id
+
+#### id
+
+*Required*<br>
+Type: `(string|Object)`
+
+The id of the polygon. Read about it (here)[#markers] 
+
+## GoogleMarker API
+
+### googleMarker.getInstance()
 
 Returns `google.maps.Marker`
 

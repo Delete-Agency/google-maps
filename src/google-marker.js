@@ -1,28 +1,28 @@
 export default class GoogleMarker {
-    constructor({ id, map, mapInstance, markerOptions, options }) {
-        this.id = id;
-        this.map = map;
-        this.mapInstance = mapInstance;
-        this.markerOptions = markerOptions;
+    constructor({ id, map, mapInstance, config, options }) {
+        this._id = id;
+        this._map = map;
+        this._mapInstance = mapInstance;
+        this._onStateChangeCallback = null;
+        this._isActive = false;
+        this._popupElement = null;
+
+        this.config = config;
         this.options = options;
 
-        this.onStateChangeCallback = null;
-        this.isActive = false;
-        this.popupElement = null;
-        if (this.markerOptions.popupElement) {
-            this.popupElement = this.markerOptions.popupElement;
+        if (this.config.popupElement) {
+            this._popupElement = this.config.popupElement;
         }
 
         this._onClick = this._onClick.bind(this);
-
-        this.markerInstance = new google.maps.Marker(this._getGoogleMarkerOptions());
-        this.clickListener = this.markerInstance.addListener('click', this._onClick);
+        this._instance = new google.maps.Marker(this._getGoogleOptions());
+        this._clickListener = this._instance.addListener('click', this._onClick);
     }
 
-    _getGoogleMarkerOptions() {
+    _getGoogleOptions() {
         return {
-            ...this.markerOptions,
-            map: this.mapInstance,
+            ...this.config,
+            map: this._mapInstance,
             icon: this._getGoogleIcon(),
         };
     }
@@ -40,33 +40,33 @@ export default class GoogleMarker {
     }
 
     getPosition() {
-        return this.markerInstance.getPosition();
+        return this._instance.getPosition();
     }
 
-    getMarkerInstance() {
-        return this.markerInstance;
+    getInstance() {
+        return this._instance;
     }
 
     setPopupElement(element) {
-        this.popupElement = element;
+        this._popupElement = element;
     }
 
     activate() {
-        if (!this.isActive) {
+        if (!this._isActive) {
             this._activate();
         }
     }
 
     deactivate() {
-        if (this.isActive) {
+        if (this._isActive) {
             this._deactivate();
         }
     }
 
     onStateChange(cb) {
-        this.onStateChangeCallback = cb;
+        this._onStateChangeCallback = cb;
         return () => {
-            this.onStateChangeCallback = null;
+            this._onStateChangeCallback = null;
         };
     }
 
@@ -75,60 +75,64 @@ export default class GoogleMarker {
     };
 
     _activate() {
-        this.map.onMarkerActivate(this.id);
+        this._map.onMarkerActivate(this._id);
     }
 
     handleActivate() {
-        if (!this.isActive) {
+        if (!this._isActive) {
             this._handleActivate();
+        }
+
+        if (this.options.autoFitPopup) {
+            this._fitPopup();
         }
     }
 
     _handleActivate() {
-        this.isActive = true;
+        this._isActive = true;
         this._showPopup();
         this._renderIcon();
         this.invokeOnStateChange();
     }
 
     _deactivate() {
-        this.map.onMarkerDeactivate(this.id);
+        this._map.onMarkerDeactivate(this._id);
     }
 
     handleDeactivate() {
-        if (this.isActive) {
+        if (this._isActive) {
             this._handleDeactivate();
         }
     }
 
     _handleDeactivate() {
-        this.isActive = false;
+        this._isActive = false;
         this._hidePopup();
         this._renderIcon();
         this.invokeOnStateChange();
     }
 
     _renderIcon() {
-        this.markerInstance.setIcon(this._getGoogleIcon());
+        this._instance.setIcon(this._getGoogleIcon());
     }
 
     _reset() {
-        if (this.isActive) {
+        if (this._isActive) {
             this._deactivate();
         }
     }
 
     destroy() {
         this._reset();
-        this.clickListener.remove();
-        this.markerInstance.setMap(null);
-        this.markerInstance = null;
-        this.onStateChangeCallback = null;
+        this._clickListener.remove();
+        this._instance.setMap(null);
+        this._instance = null;
+        this._onStateChangeCallback = null;
     }
 
     invokeOnStateChange() {
-        if (this.onStateChangeCallback) {
-            this.onStateChangeCallback(this.isActive);
+        if (this._onStateChangeCallback) {
+            this._onStateChangeCallback(this._isActive);
         }
     }
 
@@ -145,21 +149,21 @@ export default class GoogleMarker {
     }
 
     _showPopup() {
-        if (this.popupElement) {
+        if (this._popupElement) {
             const PopupClass = this.getPopupClass();
-            this.popup = new PopupClass(this.getPosition(), this.popupElement);
-            this.popup.setMap(this.mapInstance);
+            this.popup = new PopupClass(this.getPosition(), this._popupElement);
+            this.popup.setMap(this._mapInstance);
         }
     }
 
-    fitPopup() {
+    _fitPopup() {
         if (this.popup) {
             setTimeout(() => {
                 const { getPopupContent, fitPopupPaddings } = this.options;
 
-                let targetElement = this.popupElement;
+                let targetElement = this._popupElement;
                 if (getPopupContent) {
-                    targetElement = getPopupContent(this.popupElement);
+                    targetElement = getPopupContent(this._popupElement);
                 }
 
                 if (!targetElement.clientWidth === 0 || targetElement.clientHeight === 0) {
@@ -174,7 +178,7 @@ export default class GoogleMarker {
                 const halfWidth = parseInt(targetElement.clientWidth / 2);
                 const verticalDiff = targetElement.parentElement.getBoundingClientRect().top - targetElement.getBoundingClientRect().top;
 
-                this.mapInstance.panToBounds(bounds, {
+                this._mapInstance.panToBounds(bounds, {
                     top: fitPopupPaddings.top + verticalDiff,
                     bottom: fitPopupPaddings.bottom,
                     left: fitPopupPaddings.left + halfWidth,

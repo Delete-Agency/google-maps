@@ -1,4 +1,7 @@
+import Registry from "./registry";
 import GoogleMarker from "./google-marker";
+import GooglePolyline from "./google-polyline";
+import GooglePolygon from "./google-polygon";
 
 /**
  * https://developers.google.com/maps/documentation/javascript/reference/map#Map
@@ -27,13 +30,14 @@ export default class GoogleMap {
              * @property (?Function)
              */
             initPromise: null,
-            autoFitMarkers: true,
+            autoFitOnRender: true,
             autoFitPopup: true,
+            deactivateMarkerOnMapClick: true,
             /**
              * @property (?Function)
              */
             getPopupContent: null,
-            fitMarkersPaddings: {
+            fitPaddings: {
                 top: 0,
                 bottom: 0,
                 left: 0,
@@ -55,26 +59,13 @@ export default class GoogleMap {
         this.initPromise = null;
 
         /**
-         * @type {Object[]}
-         */
-        this.markersConfigsToRender = [];
-
-        /**
-         * @type {Object[]}
-         */
-        this.markersConfigsCurrent = this.markersConfigsToRender;
-
-        /**
-         *
-         * @type {Object.<string,GoogleMarker>}
-         */
-        this.markersById = {};
-
-        /**
-         *
-         * @type {?string}
+         * @type {?(string|Object)}
          */
         this.activeMarkerId = null;
+
+        this._markersRegistry = new Registry(this._createMarker.bind(this));
+        this._polylinesRegistry = new Registry(this._createPolyline.bind(this));
+        this._polygonsRegistry = new Registry(this._createPolygon.bind(this));
     }
 
     /**
@@ -83,8 +74,8 @@ export default class GoogleMap {
      */
     async _getMap() {
         if (this.initPromise === null) {
-            const loadScriptPromise = this.options.initPromise ? this.options.initPromise() : Promise.resolve();
-            this.initPromise = loadScriptPromise.then(() => this._createMap());
+            const initPromise = this.options.initPromise ? this.options.initPromise() : Promise.resolve();
+            this.initPromise = initPromise.then(() => this._createMap());
         }
 
         return this.initPromise;
@@ -100,63 +91,12 @@ export default class GoogleMap {
      */
     _createMap() {
         const map = new google.maps.Map(this.element, this.mapOptions);
-        map.addListener('click', () => {
-            this._deactivateCurrentMarker();
-        });
+        if (this.options.deactivateMarkerOnMapClick) {
+            map.addListener('click', () => {
+                this._deactivateCurrentMarker();
+            });
+        }
         return map;
-    }
-
-    _updateMarkers(map, markers) {
-        const newMarkersByIds = this._getMarkersById(markers);
-        const newMarkersIds = Object.keys(newMarkersByIds);
-
-        const markersIdsToRemove = this._getMarkersIdsToRemove(newMarkersIds);
-        if (markersIdsToRemove.length > 0) {
-            this._removeMarkersByIds(markersIdsToRemove);
-        }
-
-        const markersToAdd = this._getMarkersToAdd(newMarkersByIds);
-        if (markersToAdd.length > 0) {
-            this._addMarkers(markersToAdd, map);
-        }
-
-        if (markersIdsToRemove.length > 0 || markersToAdd.length > 0) {
-            // something has changed
-            if (this.getCurrentMarkersCount() === 0) {
-                // return to origin focus and center
-                this._applyInitialCenter(map);
-            } else {
-                // if we have some markers
-                if (this.options.autoFitMarkers) {
-                    this._fitCurrentMarkers(map);
-                }
-            }
-        }
-
-        const activeMarker = this.getMarkerById(this.activeMarkerId);
-        if (!activeMarker) {
-            this.activeMarkerId = null;
-        }
-    }
-
-    _getMarkersById(markers) {
-        return markers.reduce((result, marker) => {
-            result[this._getMarkerId(marker)] = marker;
-            return result;
-        }, {});
-    }
-
-    _addMarkers(markers, map) {
-        if (markers.length === 0) {
-            return;
-        }
-        const newMarkers = {};
-        markers.forEach(marker => {
-            const id = this._getMarkerId(marker);
-            newMarkers[id] = this._createMarker(id, marker, map);
-        });
-
-        this.markersById = { ...this.markersById, ...newMarkers };
     }
 
     /**
@@ -168,39 +108,52 @@ export default class GoogleMap {
         map.setZoom(this.mapOptions.zoom);
     }
 
-    _fitCurrentMarkers(map) {
+    _fitAll(map) {
         const bounds = new google.maps.LatLngBounds();
-        const currentMarkers = Object.values(this.markersById);
+
+        const currentMarkers = this._markersRegistry.getCurrentInstances();
         currentMarkers.forEach(marker => {
             bounds.extend(marker.getPosition());
         });
-        map.setCenter(bounds.getCenter());
-        map.fitBounds(bounds, this.options.fitMarkersPaddings);
+
+        const currentPolylines = this._polylinesRegistry.getCurrentInstances();
+        currentPolylines.forEach(
+            polyline => polyline.getInstance().getPath().forEach(
+                latLng => {
+                    bounds.extend(latLng);
+                }
+            )
+        );
+
+        const currentPolygons = this._polygonsRegistry.getCurrentInstances();
+        currentPolygons.forEach(
+            polygon => polygon.getInstance().getPaths().forEach(
+                path => path.forEach(
+                    latLng => {
+                        bounds.extend(latLng);
+                    }
+                )
+            )
+        );
+
+        this._fitBounds(map, bounds);
     }
 
-    _removeMarkersByIds(ids) {
-        ids.forEach(id => {
-            const marker = this.markersById[id];
-            marker.destroy();
-        });
-        this.markersById = Object.keys(this.markersById)
-            .filter(id => !ids.includes(id))
-            .reduce((result, id) => {
-                result[id] = this.markersById[id];
-                return result;
-            }, {})
+    _fitBounds(map, bounds) {
+        map.setCenter(bounds.getCenter());
+        map.fitBounds(bounds, this.options.fitPaddings);
     }
 
     _createMarker(
         id,
-        marker,
+        config,
         map
     ) {
         const options = {
             id,
             map: this,
             mapInstance: map,
-            markerOptions: marker,
+            config,
             options: this.options
         };
 
@@ -211,51 +164,38 @@ export default class GoogleMap {
         }
     }
 
-    _getMarkersToAdd(newMarkersByIds) {
-        const currentMarkersIds = this._getCurrentMarkersIds();
+    _createPolyline(
+        id,
+        config,
+        map
+    ) {
+        const options = {
+            id,
+            map: this,
+            mapInstance: map,
+            config,
+            options: this.options
+        };
 
-        return Object.keys(newMarkersByIds).reduce((result, newMarkerId) => {
-            if (!currentMarkersIds.includes(newMarkerId)) {
-                result.push(newMarkersByIds[newMarkerId]);
-            }
-            return result;
-        }, []);
+        return new GooglePolyline(options);
     }
 
-    _getMarkersIdsToRemove(newMarkersIds) {
-        return this._getCurrentMarkersIds().reduce((result, id) => {
-            if (!newMarkersIds.includes(id)) {
-                result.push(id);
-            }
-            return result;
-        }, []);
+    _createPolygon(
+        id,
+        config,
+        map
+    ) {
+        const options = {
+            id,
+            map: this,
+            mapInstance: map,
+            config,
+            options: this.options
+        };
+
+        return new GooglePolygon(options);
     }
 
-    _getCurrentMarkersIds() {
-        return Object.keys(this.markersById);
-    }
-
-    _getMarkerPosition(marker) {
-        return marker.position;
-    }
-
-    /**
-     * @param marker
-     * @return {string}
-     * @private
-     */
-    _getMarkerId(marker) {
-        let id = null;
-        if (marker.id) {
-            id = marker.id;
-        } else {
-            const position = this._getMarkerPosition(marker);
-            if (position.lat && position.lng) {
-                id = `${position.lat},${position.lng}`;
-            }
-        }
-        return id;
-    }
 
     _deactivateCurrentMarker() {
         if (this.activeMarkerId) {
@@ -292,51 +232,109 @@ export default class GoogleMap {
     _activateMarker(newMarker, id) {
         this.activeMarkerId = id;
         newMarker.handleActivate();
-
-        if (this.options.autoFitPopup) {
-            newMarker.fitPopup()
-        }
-    }
-
-    getMarkerByConfig(marker) {
-        return this.markersById[this._getMarkerId(marker)];
-    }
-
-    getMarkerById(id) {
-        return this.markersById[id];
-    }
-
-    getMarkersById() {
-        return this.markersById;
-    }
-
-    /**
-     * @param markers
-     * @return {GoogleMap}
-     */
-    setMarkers(markers) {
-        this.markersConfigsToRender = markers;
-        return this;
     }
 
     async render() {
         // just call getMap in order to create google.maps.Map which automatically renders the map
         const map = await this._getMap();
-        // render markers
-        if (this.markersConfigsToRender !== this.markersConfigsCurrent) {
-            this._updateMarkers(map, this.markersConfigsToRender);
-            this.markersConfigsCurrent = this.markersConfigsToRender;
+        const markersChanged = this._renderMarkers(map);
+        const polylinesChanged = this._renderPolygons(map);
+        const polygonsChanged = this._renderPolylines(map);
+
+        if (markersChanged || polylinesChanged || polygonsChanged) {
+            // something has changed
+            if (this._getObjectsCount() === 0) {
+                // return to origin focus and center
+                this._applyInitialCenter(map);
+            } else {
+                // if we have some objects
+                if (this.options.autoFitOnRender) {
+                    this._fitAll(map);
+                }
+            }
         }
     }
 
-    async fitCurrentMarkers() {
-        if (this.getCurrentMarkersCount() > 0) {
+    _renderMarkers(map) {
+        const [added, removed] = this._markersRegistry.update(map);
+
+        const activeMarker = this.getMarkerById(this.activeMarkerId);
+        if (!activeMarker) {
+            this.activeMarkerId = null;
+        }
+
+        return (added + removed) > 0;
+    }
+
+    _renderPolygons(map) {
+        const [added, removed] = this._polygonsRegistry.update(map);
+        return (added + removed) > 0;
+    }
+
+    _renderPolylines(map) {
+        const [added, removed] = this._polylinesRegistry.update(map);
+        return (added + removed) > 0;
+    }
+
+    async fitDrawings() {
+        if (this._getObjectsCount() > 0) {
             const map = await this._getMap();
-            this._fitCurrentMarkers(map);
+            this._fitAll(map);
         }
     }
 
-    getCurrentMarkersCount() {
-        return Object.keys(this.markersById).length;
+    _getObjectsCount() {
+        return this.getMarkersCount() + this.getPolygonsCount() + this.getPolylinesCount();
+    }
+
+    getMarkersCount() {
+        return this._markersRegistry.getCurrentInstanceCount();
+    }
+
+    getPolylinesCount() {
+        return this._polylinesRegistry.getCurrentInstanceCount();
+    }
+
+    getPolygonsCount() {
+        return this._polygonsRegistry.getCurrentInstanceCount();
+    }
+
+    getMarkerById(id) {
+        return this._markersRegistry.getInstanceById(id);
+    }
+
+    getPolylineById(id) {
+        return this._polylinesRegistry.getInstanceById(id);
+    }
+
+    getPolygonById(id) {
+        return this._polygonsRegistry.getInstanceById(id);
+    }
+
+    /**
+     * @param configs
+     * @return {GoogleMap}
+     */
+    setMarkers(configs) {
+        this._markersRegistry.setConfigs(configs);
+        return this;
+    }
+
+    /**
+     * @param configs
+     * @return {GoogleMap}
+     */
+    setPolylines(configs) {
+        this._polylinesRegistry.setConfigs(configs);
+        return this;
+    }
+
+    /**
+     * @param configs
+     * @return {GoogleMap}
+     */
+    setPolygons(configs) {
+        this._polygonsRegistry.setConfigs(configs);
+        return this;
     }
 }
