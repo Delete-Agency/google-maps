@@ -79,6 +79,11 @@ Below you can find options for GoogleMap itself (these are passed to the GoogleM
 Type: `Function`<br>
 Default: `null`
 
+If provided this function should return an instance of GoogleMarker class.
+<br>
+It is called with the following arguments: ({id, map, mapInstance, config, options}) => { ... }
+See [GoogleMarker API](#googlemarker-api) 
+
 ### initPromise
 
 Type: `Function`<br>
@@ -103,6 +108,8 @@ Default: `true`
 
 Type: `Function`<br>
 Default: `null`
+
+See [examples](https://delete-agency.github.io/google-maps/) 
 
 ### fitPaddings
 
@@ -139,7 +146,7 @@ Type: `Object`
 
 ### map.render()
 
-Renders the map
+Renders the map itself and other objects (markers, polylines, polygons)
 
 **Note**: Just creating an instance doesn't render anything, 
 you have to implicitly call its render method to render initial map 
@@ -175,7 +182,7 @@ Type: `google.maps.PolylineOptions[]`
 
 An array of objects which are inherited from [google.maps.PolylineOptions](https://developers.google.com/maps/documentation/javascript/reference/polygon#PolylineOptions)
 <br>
-Uses the same idea with `id` as (markers)[#markers]
+Uses the same idea with `id` as [markers](#markers)
 
 ### map.setPolygons(polygons)
 
@@ -188,9 +195,9 @@ Type: `google.maps.PolygonOptions[]`
 
 An array of objects which are inherited from [google.maps.PolygonOptions](https://developers.google.com/maps/documentation/javascript/reference/polygon#PolygonOptions)
 <br>
-Uses the same idea with `id` as (markers)[#markers]
+Uses the same idea with `id` as [markers](#markers)
 
-### map.getMapInstance()
+### map.getInstance()
 
 Returns `Promise<google.maps.Map>`
 
@@ -257,6 +264,12 @@ The id of the polygon. Read about it (here)[#markers]
 
 ## GoogleMarker API
 
+### new GoogleMarker({id, map, mapInstance, config, options})
+
+You don't need to create GoogleMarker instances manually until you want to use custom markers classes.
+<br>
+See (here)[#createMarker] 
+
 ### googleMarker.getInstance()
 
 Returns `google.maps.Marker`
@@ -275,7 +288,7 @@ Type: `HTMLElement`
 Activates the marker.
 <br> Note that activate is not just about showing the popup, 
 for example you can change the icon of the marker when its state is changed
-but not showing and popups above the active one
+but not show any popup above it
 
 ### googleMarker.deactivate()
 

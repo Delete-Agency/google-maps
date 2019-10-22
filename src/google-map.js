@@ -69,7 +69,7 @@ export default class GoogleMap {
     }
 
     /**
-     * @return {Promise<GoogleMapsMap>}
+     * @return {Promise<Object>}
      * @private
      */
     async _getMap() {
@@ -81,12 +81,17 @@ export default class GoogleMap {
         return this.initPromise;
     }
 
-    async getMapInstance() {
+    /**
+     * @return {Promise<Object>}
+     * @private
+     */
+    getInstance() {
         return this._getMap();
     }
 
     /**
-     * @return GoogleMapsMap
+     * Create an instance of google.maps.Map (see https://developers.google.com/maps/documentation/javascript/reference/map#Map)
+     * @return {Object}
      * @private
      */
     _createMap() {
@@ -100,7 +105,7 @@ export default class GoogleMap {
     }
 
     /**
-     * @param {GoogleMapsMap} map
+     * @param {Object} map
      * @private
      */
     _applyInitialCenter(map) {
