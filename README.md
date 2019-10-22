@@ -54,6 +54,16 @@ map.setMarkers([
         popupElement: document.getElementById('popup2')
     }
 ]);
+map.setPolygons([
+    {
+        paths: [{lat: 51.458, lng:-0.08677}, {lat: 51.45703, lng:-0.1087},  {lat:51.45282, lng:-0.0922}, {lat: 51.45324, lng:-0.0918},  {lat:51.45343, lng:-0.0903 }, {lat: 51.456, lng:-0.08767}, {lat: 51.458, lng:-0.08677}],
+        strokeColor: '#0033ff',
+        strokeOpacity: 0.3,
+        strokeWeight: 4,
+        fillColor: '#0033ff',
+        fillOpacity: 0.1,
+    }
+]);
 map.render();
 ```
 
