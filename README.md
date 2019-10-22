@@ -266,7 +266,7 @@ The id of the polygon. Read about it (here)[#markers]
 
 ### new GoogleMarker({id, map, mapInstance, config, options})
 
-You don't need to create GoogleMarker instances manually until you want to use custom markers classes with (createMarker)[#createMarker]
+You don't need to create GoogleMarker instances manually until you want to use custom markers classes with (createMarker)[#createmarker]
 
 ### googleMarker.getInstance()
 
