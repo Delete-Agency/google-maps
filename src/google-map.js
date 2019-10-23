@@ -3,14 +3,6 @@ import GoogleMarker from "./google-marker";
 import GooglePolyline from "./google-polyline";
 import GooglePolygon from "./google-polygon";
 
-/**
- * https://developers.google.com/maps/documentation/javascript/reference/map#Map
- * @typedef {Object} GoogleMapsMap
- * @property {function} addListener
- * @property {function} fitBounds
- * @property {function} setCenter
- * @property {function} setZoom
- */
 export default class GoogleMap {
     /**
      *
