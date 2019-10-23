@@ -1,8 +1,7 @@
 # Google Maps
 
-[Live Demo](https://delete-agency.github.io/google-maps/)
-
 A wrapper around [Google Maps JavaScript API](https://developers.google.com/maps/documentation/javascript/reference) which supports custom popups out of the box and simplify common tasks.
+[Live Demo](https://delete-agency.github.io/google-maps/)
 
 ## Installation
 
