@@ -2,18 +2,18 @@
   "name": "@deleteagency/google-maps",
   "version": "2.0.2",
   "description": "",
-  "main": "build/index.js",
+  "main": "lib/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/Delete-Agency/google-maps.git"
   },
   "homepage": "https://github.com/Delete-Agency/google-maps",
   "scripts": {
-    "transpile": "babel src -d build",
+    "build": "babel src -d lib",
     "standalone": "webpack",
-    "watch": "webpack --watch",
-    "build": "npm run transpile && npm run standalone",
-    "test": "jest --coverage"
+    "standalone:watch": "webpack --watch",
+    "test": "echo \"No test specified\"",
+    "prepublish": "npm run build && npm run standalone"
   },
   "author": "",
   "license": "MIT",
