@@ -167,7 +167,7 @@ export default class GoogleMarker {
                 }
 
                 if (!targetElement.clientWidth === 0 || targetElement.clientHeight === 0) {
-                    console.warn('Width or height of your popup content is 0 which is not correct. ' +
+                    console.warn('Width or height of your popup is 0 which is not correct. ' +
                         'If the root of your popup have zero dimensions on purpose please provide GoogleMapOptions.getPopupContent ' +
                         'which should return an actual content element with non-zero width and height')
                 }
