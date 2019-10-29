@@ -3,5 +3,6 @@ coverage/
 examples/
 node_modules/
 tests/
+demo/
 index.html
 *.config.js

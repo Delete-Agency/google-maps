@@ -10,8 +10,9 @@
   "homepage": "https://github.com/Delete-Agency/google-maps",
   "scripts": {
     "build": "babel src -d lib",
-    "standalone": "webpack",
-    "standalone:watch": "webpack --watch",
+    "standalone": "webpack --config webpack.standalone.config.js",
+    "demo": "webpack --config webpack.demo.config.js",
+    "demo:watch": "webpack --config webpack.demo.config.js --watch",
     "test": "echo \"No test specified\"",
     "prepublish": "npm run build && npm run standalone"
   },

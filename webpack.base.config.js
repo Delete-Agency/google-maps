@@ -7,7 +7,6 @@ module.exports = (env, argv) => {
             "google-maps": ["./src/index.js"]
         },
         output: {
-            path: __dirname + '/standalone',
             filename: "[name].min.js",
             library: 'GoogleMaps',
             libraryTarget: 'umd'
