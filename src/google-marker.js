@@ -233,7 +233,7 @@ function getPopupClass() {
         }
 
         onAdd() {
-            /** Called when the popup is added to the map. */
+            /** Called when the popup is added to the map */
             this.getPanes().floatPane.appendChild(this.anchor);
         }
 
