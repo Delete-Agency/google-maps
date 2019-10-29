@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.17.1/plugins/autoloader/prism-autoloader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@deleteagency/live-highlight@0.0.1/build/live-highlight.min.js"></script>
 
-    <script src="build/google-maps.min.js"></script>
+    <script src="standalone/google-maps.min.js"></script>
 </head>
 
 <script>
@@ -94,11 +94,11 @@
                 You can do it either by waiting for onMapsReady callback:
             </p>
             <pre><code class="language-js">onMapsReady(() =&gt; {
-    const map = new GoogleMap(document.getElementById('map'));
+    const map = new GoogleMaps.GoogleMap(document.getElementById('map'));
     map.render();
 });</code></pre>
             <p>Or pass a promise to the GoogleMap options which will be resolved once Maps Api is ready:</p>
-            <pre><code class="language-js">const map = new GoogleMap(
+            <pre><code class="language-js">const map = new GoogleMaps.GoogleMap(
     document.getElementById('map'),
     {},
     {
@@ -111,7 +111,7 @@ map.render();</code></pre>
             <div data-live-highlight-target="target0"></div>
             <div class="map" id="map0"></div>
             <script data-live-highlight="target0">
-                const map = new GoogleMap(
+                const map = new GoogleMaps.GoogleMap(
                     document.getElementById('map0'),
                     {
                         zoom: 15,
@@ -172,7 +172,7 @@ map.render();</code></pre>
                     }
                 ];
 
-                const map1 = new GoogleMap(
+                const map1 = new GoogleMaps.GoogleMap(
                     document.getElementById('map1'),
                     {
                         zoom: 11,
@@ -312,7 +312,7 @@ map.render();</code></pre>
                     return marker;
                 });
 
-                const map2 = new GoogleMap(
+                const map2 = new GoogleMaps.GoogleMap(
                     document.getElementById('map2'),
                     {
                         zoom: 11,
@@ -377,7 +377,7 @@ map.render();</code></pre>
                 });
 
 
-                class HouseIconMarker extends GoogleMarker {
+                class HouseIconMarker extends GoogleMaps.GoogleMarker {
                     getIconUrl() {
                         // you can use isActive property to change the marker appearance
                         return this._isActive ? 'https://image.flaticon.com/icons/svg/1264/1264791.svg' : 'https://image.flaticon.com/icons/svg/1239/1239525.svg';
@@ -392,7 +392,7 @@ map.render();</code></pre>
                     }
                 }
 
-                const map3 = new GoogleMap(
+                const map3 = new GoogleMaps.GoogleMap(
                     document.getElementById('map3'),
                     {},
                     {
@@ -441,7 +441,7 @@ map.render();</code></pre>
                     }
                 ];
 
-                const map4 = new GoogleMap(
+                const map4 = new GoogleMaps.GoogleMap(
                     document.getElementById('map4'),
                     {
                         center: {

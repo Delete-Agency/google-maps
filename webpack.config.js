@@ -2,14 +2,15 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = (env, argv) => {
     return {
-        mode: "development",
+        mode: "production",
         entry: {
-            "google-maps": ["@babel/polyfill", "./index.js"]
+            "google-maps": ["./src/index.js"]
         },
         output: {
-            path: __dirname + '/build',
+            path: __dirname + '/standalone',
             filename: "[name].min.js",
-            libraryTarget: 'window'
+            library: 'GoogleMaps',
+            libraryTarget: 'umd'
         },
         resolve: {
             extensions: ['.js'],
@@ -24,7 +25,15 @@ module.exports = (env, argv) => {
                     use: {
                         loader: "babel-loader",
                         options: {
-                            presets: ['@babel/preset-env']
+                            presets: [
+                                [
+                                    '@babel/preset-env',
+                                    {
+                                        useBuiltIns: 'usage',
+                                        corejs: 3
+                                    }
+                                ]
+                            ]
                         }
                     }
                 }

@@ -64,7 +64,7 @@ export default class GoogleMap {
      * @return {Promise<Object>}
      * @private
      */
-    async _getMap() {
+    _getMap() {
         if (this.initPromise === null) {
             const initPromise = this.options.initPromise ? this.options.initPromise() : Promise.resolve();
             this.initPromise = initPromise.then(() => this._createMap());
@@ -231,25 +231,25 @@ export default class GoogleMap {
         newMarker.handleActivate();
     }
 
-    async render() {
-        // just call getMap in order to create google.maps.Map which automatically renders the map
-        const map = await this._getMap();
-        const markersChanged = this._renderMarkers(map);
-        const polylinesChanged = this._renderPolygons(map);
-        const polygonsChanged = this._renderPolylines(map);
+    render() {
+        this._getMap().then((map) => {
+            const markersChanged = this._renderMarkers(map);
+            const polylinesChanged = this._renderPolygons(map);
+            const polygonsChanged = this._renderPolylines(map);
 
-        if (markersChanged || polylinesChanged || polygonsChanged) {
-            // something has changed
-            if (this._getObjectsCount() === 0) {
-                // return to origin focus and center
-                this._applyInitialCenter(map);
-            } else {
-                // if we have some objects
-                if (this.options.autoFitOnRender) {
-                    this._fitAll(map);
+            if (markersChanged || polylinesChanged || polygonsChanged) {
+                // something has changed
+                if (this._getObjectsCount() === 0) {
+                    // return to origin focus and center
+                    this._applyInitialCenter(map);
+                } else {
+                    // if we have some objects
+                    if (this.options.autoFitOnRender) {
+                        this._fitAll(map);
+                    }
                 }
             }
-        }
+        });
     }
 
     _renderMarkers(map) {
@@ -273,10 +273,11 @@ export default class GoogleMap {
         return (added + removed) > 0;
     }
 
-    async fitDrawings() {
+    fitDrawings() {
         if (this._getObjectsCount() > 0) {
-            const map = await this._getMap();
-            this._fitAll(map);
+            this._getMap().then(map => {
+                this._fitAll(map);
+            });
         }
     }
 
