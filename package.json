@@ -3,13 +3,18 @@
   "version": "3.0.0-4",
   "description": "",
   "main": "lib/index.js",
+  "files": [
+    "lib",
+    "src",
+    "standalone"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/Delete-Agency/google-maps.git"
   },
   "homepage": "https://github.com/Delete-Agency/google-maps",
   "scripts": {
-    "build": "babel src -d lib",
+    "build": "webpack --config webpack.build.config.js",
     "standalone": "webpack --config webpack.standalone.config.js",
     "demo": "webpack --config webpack.demo.config.js",
     "demo:watch": "webpack --config webpack.demo.config.js --watch",
@@ -29,7 +34,6 @@
     "webpack-cli": "^3.3.6"
   },
   "browserslist": [
-    "ie 11",
     "last 2 firefox versions",
     "last 2 edge versions",
     "last 2 chrome versions",
