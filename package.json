@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/Delete-Agency/google-maps",
   "scripts": {
-    "build": "webpack --config webpack.build.config.js",
+    "build": "babel src -d lib",
     "standalone": "webpack --config webpack.standalone.config.js",
     "demo": "webpack --config webpack.demo.config.js",
     "demo:watch": "webpack --config webpack.demo.config.js --watch",
@@ -29,7 +29,7 @@
     "@babel/preset-env": "^7.5.5",
     "babel-loader": "^8.0.6",
     "clean-webpack-plugin": "^3.0.0",
-    "core-js": "^3.3.5",
+    "core-js": "^2.0.0",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.6"
   },
