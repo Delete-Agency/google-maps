@@ -1,8 +1,11 @@
-export default class GoogleMarker {
+import GoogleDrawing from "./google-drawing";
+
+export default class GoogleMarker extends GoogleDrawing {
     constructor({ id, map, mapInstance, config, options }) {
+        super({ mapInstance, config });
+
         this._id = id;
         this._map = map;
-        this._mapInstance = mapInstance;
         this._onStateChangeCallback = null;
         this._isActive = false;
         this._popupElement = null;
@@ -15,8 +18,17 @@ export default class GoogleMarker {
         }
 
         this._onClick = this._onClick.bind(this);
-        this._instance = new google.maps.Marker(this._getGoogleOptions());
         this._clickListener = this._instance.addListener('click', this._onClick);
+    }
+
+    getNativeClass() {
+        return google.maps.Marker;
+    }
+
+    getBounds() {
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(this._instance.getPosition());
+        return bounds;
     }
 
     _getGoogleOptions() {
@@ -41,10 +53,6 @@ export default class GoogleMarker {
 
     getPosition() {
         return this._instance.getPosition();
-    }
-
-    getInstance() {
-        return this._instance;
     }
 
     setPopupElement(element) {
@@ -172,13 +180,10 @@ export default class GoogleMarker {
                         'which should return an actual content element with non-zero width and height')
                 }
 
-                const bounds = new google.maps.LatLngBounds();
-                bounds.extend(this.getPosition());
-
                 const halfWidth = parseInt(targetElement.clientWidth / 2);
                 const verticalDiff = targetElement.parentElement.getBoundingClientRect().top - targetElement.getBoundingClientRect().top;
 
-                this._mapInstance.panToBounds(bounds, {
+                this._mapInstance.panToBounds(this.getBounds(), {
                     top: fitPopupPaddings.top + verticalDiff,
                     bottom: fitPopupPaddings.bottom,
                     left: fitPopupPaddings.left + halfWidth,

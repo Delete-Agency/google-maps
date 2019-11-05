@@ -1,19 +1,19 @@
-export default class GooglePolyline {
-    constructor({ mapInstance, config }) {
-        this._mapInstance = mapInstance;
-        this.config = config;
-        this._instance = new google.maps.Polyline(this._getGoogleOptions());
+import GoogleDrawing from "./google-drawing";
+
+export default class GooglePolyline extends GoogleDrawing {
+    getNativeClass() {
+        return google.maps.Polyline;
     }
 
-    _getGoogleOptions() {
-        return {
-            ...this.config,
-            map: this._mapInstance,
-        };
-    }
-
-    getInstance() {
-        return this._instance;
+    getBounds() {
+        return this.getNativeInstance().getPath().getArray().reduce(
+            (bounds, latLng) => {
+                debugger;
+                bounds.extend(latLng);
+                return bounds;
+            },
+            new google.maps.LatLngBounds()
+        );
     }
 }
 

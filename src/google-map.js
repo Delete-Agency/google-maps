@@ -1,7 +1,10 @@
 import Registry from "./registry";
 import GoogleMarker from "./google-marker";
+import GoogleDrawing from "./google-drawing";
 import GooglePolyline from "./google-polyline";
 import GooglePolygon from "./google-polygon";
+import GoogleCircle from "./google-circle";
+import GoogleRectangle from "./google-rectangle";
 
 export default class GoogleMap {
     /**
@@ -56,8 +59,10 @@ export default class GoogleMap {
         this.activeMarkerId = null;
 
         this._markersRegistry = new Registry(this._createMarker.bind(this));
-        this._polylinesRegistry = new Registry(this._createPolyline.bind(this));
-        this._polygonsRegistry = new Registry(this._createPolygon.bind(this));
+        this._polylinesRegistry = new Registry(this._createDrawing.bind(this, GooglePolyline));
+        this._polygonsRegistry = new Registry(this._createDrawing.bind(this, GooglePolygon));
+        this._circlesRegistry = new Registry(this._createDrawing.bind(this, GoogleCircle));
+        this._rectanglesRegistry = new Registry(this._createDrawing.bind(this, GoogleRectangle));
     }
 
     /**
@@ -108,30 +113,11 @@ export default class GoogleMap {
     _fitAll(map) {
         const bounds = new google.maps.LatLngBounds();
 
-        const currentMarkers = this._markersRegistry.getCurrentInstances();
-        currentMarkers.forEach(marker => {
-            bounds.extend(marker.getPosition());
-        });
-
-        const currentPolylines = this._polylinesRegistry.getCurrentInstances();
-        currentPolylines.forEach(
-            polyline => polyline.getInstance().getPath().forEach(
-                latLng => {
-                    bounds.extend(latLng);
-                }
-            )
-        );
-
-        const currentPolygons = this._polygonsRegistry.getCurrentInstances();
-        currentPolygons.forEach(
-            polygon => polygon.getInstance().getPaths().forEach(
-                path => path.forEach(
-                    latLng => {
-                        bounds.extend(latLng);
-                    }
-                )
-            )
-        );
+        this._markersRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
+        this._polylinesRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
+        this._polygonsRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
+        this._circlesRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
+        this._rectanglesRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
 
         this._fitBounds(map, bounds);
     }
@@ -161,7 +147,8 @@ export default class GoogleMap {
         }
     }
 
-    _createPolyline(
+    _createDrawing(
+        className,
         id,
         config,
         map
@@ -170,29 +157,11 @@ export default class GoogleMap {
             id,
             map: this,
             mapInstance: map,
-            config,
-            options: this.options
+            config
         };
 
-        return new GooglePolyline(options);
+        return new className(options);
     }
-
-    _createPolygon(
-        id,
-        config,
-        map
-    ) {
-        const options = {
-            id,
-            map: this,
-            mapInstance: map,
-            config,
-            options: this.options
-        };
-
-        return new GooglePolygon(options);
-    }
-
 
     _deactivateCurrentMarker() {
         if (this.activeMarkerId) {
@@ -233,11 +202,15 @@ export default class GoogleMap {
 
     render() {
         this._getMap().then((map) => {
-            const markersChanged = this._renderMarkers(map);
-            const polylinesChanged = this._renderPolygons(map);
-            const polygonsChanged = this._renderPolylines(map);
+            const registryChanged = [
+                this._renderMarkers(map),
+                this._renderPolygons(map),
+                this._renderPolylines(map),
+                this._renderCircles(map),
+                this._renderRectangles(map)
+            ];
 
-            if (markersChanged || polylinesChanged || polygonsChanged) {
+            if (registryChanged.some(value => value)) {
                 // something has changed
                 if (this._getObjectsCount() === 0) {
                     // return to origin focus and center
@@ -272,6 +245,17 @@ export default class GoogleMap {
         const [added, removed] = this._polylinesRegistry.update(map);
         return (added + removed) > 0;
     }
+
+    _renderCircles(map) {
+        const [added, removed] = this._circlesRegistry.update(map);
+        return (added + removed) > 0;
+    }
+
+    _renderRectangles(map) {
+        const [added, removed] = this._rectanglesRegistry.update(map);
+        return (added + removed) > 0;
+    }
+
 
     fitDrawings() {
         if (this._getObjectsCount() > 0) {
@@ -333,6 +317,24 @@ export default class GoogleMap {
      */
     setPolygons(configs) {
         this._polygonsRegistry.setConfigs(configs);
+        return this;
+    }
+
+    /**
+     * @param configs
+     * @return {GoogleMap}
+     */
+    setCircles(configs) {
+        this._circlesRegistry.setConfigs(configs);
+        return this;
+    }
+
+    /**
+     * @param configs
+     * @return {GoogleMap}
+     */
+    setRectangles(configs) {
+        this._rectanglesRegistry.setConfigs(configs);
         return this;
     }
 }

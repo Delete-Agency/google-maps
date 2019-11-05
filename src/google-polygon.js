@@ -1,19 +1,20 @@
-export default class GooglePolygon {
-    constructor({ mapInstance, config }) {
-        this._mapInstance = mapInstance;
-        this.config = config;
-        this._instance = new google.maps.Polygon(this._getGoogleOptions());
+import GoogleDrawing from "./google-drawing";
+
+export default class GooglePolygon extends GoogleDrawing {
+    getNativeClass() {
+        return google.maps.Polygon;
     }
 
-    _getGoogleOptions() {
-        return {
-            ...this.config,
-            map: this._mapInstance,
-        };
-    }
-
-    getInstance() {
-        return this._instance;
+    getBounds() {
+        const bounds = new google.maps.LatLngBounds();
+        this.getNativeInstance().getPaths().forEach(
+            path => path.forEach(
+                latLng => {
+                    bounds.extend(latLng);
+                }
+            )
+        );
+        return bounds;
     }
 }
 
