@@ -315,7 +315,6 @@ map.render();</code></pre>
                 const map2 = new GoogleMaps.GoogleMap(
                     document.getElementById('map2'),
                     {
-                        zoom: 11,
                         maxZoom: 19,
                         minZoom: 1,
                     },
@@ -394,7 +393,7 @@ map.render();</code></pre>
 
                 const map3 = new GoogleMaps.GoogleMap(
                     document.getElementById('map3'),
-                    {},
+                    { zoom: 15 },
                     {
                         initPromise: () => new Promise((resolve) => onMapsReady(resolve)),
                         createMarker: (options) => {
@@ -445,7 +444,11 @@ map.render();</code></pre>
 
                 map4.setPolylines([
                     {
-                        path: [{lat: 51.4782, lng:-0.09677}, {lat: 51.4682, lng:-0.09677}, {lat: 51.4586,lng: -0.09835}],
+                        path: [
+                            { lat: 51.4782, lng: -0.09677 },
+                            { lat: 51.4682, lng: -0.09677 },
+                            { lat: 51.4586, lng: -0.09835 }
+                        ],
                         strokeColor: '#131540',
                         strokeOpacity: 0.6,
                         strokeWeight: 6
@@ -453,16 +456,23 @@ map.render();</code></pre>
                 ]);
                 map4.setPolygons([
                     {
-                        paths: [{lat: 51.458, lng:-0.08677}, {lat: 51.45703, lng:-0.1087},  {lat:51.45282, lng:-0.0922}, {lat: 51.45324, lng:-0.0918},  {lat:51.45343, lng:-0.0903 }, {lat: 51.456, lng:-0.08767}, {lat: 51.458, lng:-0.08677}],
-                        strokeColor: '#0033ff',
+                        paths: [
+                            { lat: 51.458, lng: -0.08677 },
+                            { lat: 51.45703, lng: -0.1087 },
+                            { lat: 51.45282, lng: -0.0922 },
+                            { lat: 51.45324, lng: -0.0918 },
+                            { lat: 51.45343, lng: -0.0903 },
+                            { lat: 51.456, lng: -0.08767 },
+                            { lat: 51.458, lng: -0.08677 }],
+                        strokeColor: '#0033FF',
                         strokeOpacity: 0.3,
                         strokeWeight: 4,
-                        fillColor: '#0033ff',
+                        fillColor: '#0033FF',
                         fillOpacity: 0.1,
                     }
                 ]);
                 map4.setCircles([{
-                    center: {lat: 51.4782, lng:-0.09677},
+                    center: { lat: 51.4782, lng: -0.09677 },
                     radius: 1000
                 }]);
                 map4.render();
