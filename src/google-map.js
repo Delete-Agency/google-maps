@@ -1,6 +1,5 @@
 import Registry from "./registry";
 import GoogleMarker from "./google-marker";
-import GoogleDrawing from "./google-drawing";
 import GooglePolyline from "./google-polyline";
 import GooglePolygon from "./google-polygon";
 import GoogleCircle from "./google-circle";
@@ -63,6 +62,14 @@ export default class GoogleMap {
         this._polygonsRegistry = new Registry(this._createDrawing.bind(this, GooglePolygon));
         this._circlesRegistry = new Registry(this._createDrawing.bind(this, GoogleCircle));
         this._rectanglesRegistry = new Registry(this._createDrawing.bind(this, GoogleRectangle));
+
+        this._drawingsRegistries = [
+            this._markersRegistry,
+            this._polylinesRegistry,
+            this._polygonsRegistry,
+            this._circlesRegistry,
+            this._rectanglesRegistry
+        ];
     }
 
     /**
@@ -112,19 +119,21 @@ export default class GoogleMap {
 
     _fitAll(map) {
         const bounds = new google.maps.LatLngBounds();
-
-        this._markersRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
-        this._polylinesRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
-        this._polygonsRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
-        this._circlesRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
-        this._rectanglesRegistry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
-
+        this._drawingsRegistries.forEach((registry) => {
+            registry.getCurrentInstances().forEach(drawing => bounds.union(drawing.getBounds()));
+        });
         this._fitBounds(map, bounds);
     }
 
     _fitBounds(map, bounds) {
         map.setCenter(bounds.getCenter());
-        map.fitBounds(bounds, this.options.fitPaddings);
+
+        const count = this._getObjectsCount();
+        if (count > 1) {
+            map.fitBounds(bounds, this.options.fitPaddings);
+        } else if (this.mapOptions.zoom) {
+            map.setZoom(this.mapOptions.zoom);
+        }
     }
 
     _createMarker(
@@ -213,7 +222,7 @@ export default class GoogleMap {
             if (registryChanged.some(value => value)) {
                 // something has changed
                 if (this._getObjectsCount() === 0) {
-                    // return to origin focus and center
+                    // return to origin zoom and center
                     this._applyInitialCenter(map);
                 } else {
                     // if we have some objects
@@ -266,7 +275,7 @@ export default class GoogleMap {
     }
 
     _getObjectsCount() {
-        return this.getMarkersCount() + this.getPolygonsCount() + this.getPolylinesCount();
+        return this._drawingsRegistries.reduce((res, registry) => res + registry.getCurrentInstanceCount(), 0);
     }
 
     getMarkersCount() {
