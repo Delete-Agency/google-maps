@@ -65,7 +65,7 @@ export default class Registry {
     _getIdsToRemove(newConfigs) {
         const newConfigsIds = this._indexById(newConfigs);
         return this._getCurrentInstancesIds().reduce((result, id) => {
-            if (!newConfigsIds.includes(id)) {
+            if (!newConfigsIds.has(id)) {
                 result.push(id);
             }
             return result;
